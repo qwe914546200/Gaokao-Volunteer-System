@@ -40,7 +40,7 @@ python backend/main.py
 
 ### 4. 前端访问
 前端为纯静态文件，无需额外构建。
-直接在浏览器中双击打开 `UI设计.html` 即可使用。
+直接在浏览器中双击打开 `index.html` 即可使用。
 (或者使用任意本地静态服务器打开，如 `python -m http.server 3000`)
 
 ## 注意事项

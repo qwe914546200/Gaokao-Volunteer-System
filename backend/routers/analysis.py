@@ -44,29 +44,53 @@ def recommend_schools(req: AnalysisRequest):
     cursor = conn.cursor()
 
     try:
+        # 兼容新旧高考名称映射：物理类->理科，历史类->文科
+        mapped_subject = req.subject_type
+        if req.subject_type in ['物理类', '物理']:
+            mapped_subject = '理科'
+        elif req.subject_type in ['历史类', '历史']:
+            mapped_subject = '文科'
+
         # 2. 估算全省位次 (查询最近年份的一分一段表)
-        # 找到最近一年的数据
-        cursor.execute("SELECT MAX(year) as max_year FROM score_segment WHERE subject_type = ?", (req.subject_type,))
+        cursor.execute("SELECT MAX(year) as max_year FROM score_segment WHERE subject_type = ?", (mapped_subject,))
         year_row = cursor.fetchone()
         if not year_row or not year_row['max_year']:
-            raise HTTPException(status_code=404, detail="未找到对应的位次数据")
-        max_year = year_row['max_year']
+            # 如果映射后没找到，尝试用原名称找
+            cursor.execute("SELECT MAX(year) as max_year FROM score_segment WHERE subject_type = ?", (req.subject_type,))
+            year_row = cursor.fetchone()
+            if not year_row or not year_row['max_year']:
+                raise HTTPException(status_code=404, detail="未找到对应的位次数据，请检查科类和批次。")
+            max_year = year_row['max_year']
+            query_subject = req.subject_type
+        else:
+            max_year = year_row['max_year']
+            query_subject = mapped_subject
 
         cursor.execute("""
             SELECT cumulative_count FROM score_segment 
             WHERE year = ? AND subject_type = ? AND score_min <= ?
             ORDER BY score_min DESC LIMIT 1
-        """, (max_year, req.subject_type, req.total_score))
+        """, (max_year, query_subject, req.total_score))
         rank_row = cursor.fetchone()
         estimated_rank = rank_row['cumulative_count'] if rank_row else 0
 
         # 3. 冲稳保智能推荐 (模块二)
-        # 我们查询往年（如2024年或数据库最新年份）的录取数据，并与基础信息表连接
         cursor.execute("""
             SELECT MAX(year) as max_year FROM school_admission 
             WHERE subject_type = ? AND batch = ?
-        """, (req.subject_type, req.batch))
+        """, (mapped_subject, req.batch))
         adm_year_row = cursor.fetchone()
+        
+        if not adm_year_row or not adm_year_row['max_year']:
+            cursor.execute("""
+                SELECT MAX(year) as max_year FROM school_admission 
+                WHERE subject_type = ? AND batch = ?
+            """, (req.subject_type, req.batch))
+            adm_year_row = cursor.fetchone()
+            adm_query_subject = req.subject_type
+        else:
+            adm_query_subject = mapped_subject
+
         adm_max_year = adm_year_row['max_year'] if adm_year_row and adm_year_row['max_year'] else 2024
 
         cursor.execute("""
@@ -75,7 +99,7 @@ def recommend_schools(req: AnalysisRequest):
             FROM school_admission a
             LEFT JOIN school_info i ON a.school_name = i.school_name
             WHERE a.year = ? AND a.subject_type = ? AND a.batch = ? AND a.min_score IS NOT NULL
-        """, (adm_max_year, req.subject_type, req.batch))
+        """, (adm_max_year, adm_query_subject, req.batch))
         
         schools_data = cursor.fetchall()
         

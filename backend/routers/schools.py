@@ -75,9 +75,23 @@ def filter_schools(
     cursor = conn.cursor()
     
     try:
+        # 兼容新旧高考名称映射：物理类->理科，历史类->文科
+        mapped_subject = subject_type
+        if subject_type in ['物理类', '物理']:
+            mapped_subject = '理科'
+        elif subject_type in ['历史类', '历史']:
+            mapped_subject = '文科'
+
         # 获取最新的录取年份
-        cursor.execute("SELECT MAX(year) as max_year FROM school_admission WHERE subject_type = ? AND batch = ?", (subject_type, batch))
+        cursor.execute("SELECT MAX(year) as max_year FROM school_admission WHERE subject_type = ? AND batch = ?", (mapped_subject, batch))
         year_row = cursor.fetchone()
+        if not year_row or not year_row['max_year']:
+            cursor.execute("SELECT MAX(year) as max_year FROM school_admission WHERE subject_type = ? AND batch = ?", (subject_type, batch))
+            year_row = cursor.fetchone()
+            query_subject = subject_type
+        else:
+            query_subject = mapped_subject
+
         adm_year = year_row['max_year'] if year_row and year_row['max_year'] else 2024
         
         # 构建联合查询
@@ -88,7 +102,7 @@ def filter_schools(
             LEFT JOIN school_info i ON a.school_name = i.school_name
             WHERE a.year = ? AND a.subject_type = ? AND a.batch = ? AND a.min_score IS NOT NULL
         """
-        params = [adm_year, subject_type, batch]
+        params = [adm_year, query_subject, batch]
         
         if province and province != "全部":
             query += " AND a.province = ?"
