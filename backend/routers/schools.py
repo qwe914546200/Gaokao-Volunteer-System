@@ -4,6 +4,21 @@ from backend.database import get_db_connection
 
 router = APIRouter()
 
+def normalize_subject(subject: str) -> str:
+    if subject in ['物理类', '物理']:
+        return '理科'
+    if subject in ['历史类', '历史']:
+        return '文科'
+    return subject
+
+def normalize_batch(batch: str) -> str:
+    if not batch:
+        return batch
+    b = batch.strip().replace(' ', '')
+    if b == '专科批次':
+        return '专科批'
+    return b
+
 @router.get("/directory")
 def get_school_directory(
     page: int = Query(1, ge=1),
@@ -75,18 +90,14 @@ def filter_schools(
     cursor = conn.cursor()
     
     try:
-        # 兼容新旧高考名称映射：物理类->理科，历史类->文科
-        mapped_subject = subject_type
-        if subject_type in ['物理类', '物理']:
-            mapped_subject = '理科'
-        elif subject_type in ['历史类', '历史']:
-            mapped_subject = '文科'
+        mapped_subject = normalize_subject(subject_type)
+        mapped_batch = normalize_batch(batch)
 
         # 获取最新的录取年份
-        cursor.execute("SELECT MAX(year) as max_year FROM school_admission WHERE subject_type = ? AND batch = ?", (mapped_subject, batch))
+        cursor.execute("SELECT MAX(year) as max_year FROM school_admission WHERE subject_type = ? AND batch = ?", (mapped_subject, mapped_batch))
         year_row = cursor.fetchone()
         if not year_row or not year_row['max_year']:
-            cursor.execute("SELECT MAX(year) as max_year FROM school_admission WHERE subject_type = ? AND batch = ?", (subject_type, batch))
+            cursor.execute("SELECT MAX(year) as max_year FROM school_admission WHERE subject_type = ? AND batch = ?", (subject_type, mapped_batch))
             year_row = cursor.fetchone()
             query_subject = subject_type
         else:
@@ -102,7 +113,7 @@ def filter_schools(
             LEFT JOIN school_info i ON a.school_name = i.school_name
             WHERE a.year = ? AND a.subject_type = ? AND a.batch = ? AND a.min_score IS NOT NULL
         """
-        params = [adm_year, query_subject, batch]
+        params = [adm_year, query_subject, mapped_batch]
         
         if province and province != "全部":
             query += " AND a.province = ?"
@@ -117,9 +128,9 @@ def filter_schools(
             elif level == "211":
                 query += " AND i.is_211 = 1"
             elif level == "双一流":
-                query += " AND i.dual_class != ''"
+                query += " AND i.dual_class IS NOT NULL AND i.dual_class != '' AND i.dual_class != '-'"
             elif level == "普通本科":
-                query += " AND i.level = '本科' AND i.is_985 = 0 AND i.is_211 = 0"
+                query += " AND i.level = '本科' AND i.is_985 = 0 AND i.is_211 = 0 AND (i.dual_class IS NULL OR i.dual_class = '' OR i.dual_class = '-')"
             elif level == "专科":
                 query += " AND i.level = '专科'"
                 

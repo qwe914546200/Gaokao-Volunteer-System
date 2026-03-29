@@ -4,6 +4,21 @@ from backend.database import get_db_connection
 
 router = APIRouter()
 
+def normalize_subject(subject: str) -> str:
+    if subject in ['物理类', '物理']:
+        return '理科'
+    if subject in ['历史类', '历史']:
+        return '文科'
+    return subject
+
+def normalize_batch(batch: str) -> str:
+    if not batch:
+        return batch
+    b = batch.strip().replace(' ', '')
+    if b == '专科批次':
+        return '专科批'
+    return b
+
 def calculate_probability(diff: int, rec_type: str) -> int:
     """计算模拟录取概率"""
     # diff = 院校最低分 - 用户分数
@@ -44,12 +59,8 @@ def recommend_schools(req: AnalysisRequest):
     cursor = conn.cursor()
 
     try:
-        # 兼容新旧高考名称映射：物理类->理科，历史类->文科
-        mapped_subject = req.subject_type
-        if req.subject_type in ['物理类', '物理']:
-            mapped_subject = '理科'
-        elif req.subject_type in ['历史类', '历史']:
-            mapped_subject = '文科'
+        mapped_subject = normalize_subject(req.subject_type)
+        mapped_batch = normalize_batch(req.batch)
 
         # 2. 估算全省位次 (查询最近年份的一分一段表)
         cursor.execute("SELECT MAX(year) as max_year FROM score_segment WHERE subject_type = ?", (mapped_subject,))
@@ -78,14 +89,14 @@ def recommend_schools(req: AnalysisRequest):
         cursor.execute("""
             SELECT MAX(year) as max_year FROM school_admission 
             WHERE subject_type = ? AND batch = ?
-        """, (mapped_subject, req.batch))
+        """, (mapped_subject, mapped_batch))
         adm_year_row = cursor.fetchone()
         
         if not adm_year_row or not adm_year_row['max_year']:
             cursor.execute("""
                 SELECT MAX(year) as max_year FROM school_admission 
                 WHERE subject_type = ? AND batch = ?
-            """, (req.subject_type, req.batch))
+            """, (req.subject_type, mapped_batch))
             adm_year_row = cursor.fetchone()
             adm_query_subject = req.subject_type
         else:
@@ -95,11 +106,11 @@ def recommend_schools(req: AnalysisRequest):
 
         cursor.execute("""
             SELECT a.school_name, a.province, a.min_score, a.min_rank,
-                   i.school_type, i.is_985, i.is_211, i.dual_class
+                   i.school_type, i.is_985, i.is_211, i.dual_class, i.level
             FROM school_admission a
             LEFT JOIN school_info i ON a.school_name = i.school_name
             WHERE a.year = ? AND a.subject_type = ? AND a.batch = ? AND a.min_score IS NOT NULL
-        """, (adm_max_year, adm_query_subject, req.batch))
+        """, (adm_max_year, adm_query_subject, mapped_batch))
         
         schools_data = cursor.fetchall()
         
@@ -131,6 +142,7 @@ def recommend_schools(req: AnalysisRequest):
                         "is_985": bool(row['is_985']),
                         "is_211": bool(row['is_211']),
                         "dual_class": row['dual_class'] or "",
+                        "level": row['level'] or "",
                         "min_score": school_min_score,
                         "min_rank": row['min_rank'] or 0,
                         "probability": prob,

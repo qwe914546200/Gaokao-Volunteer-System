@@ -632,7 +632,7 @@ table.data-table{width:100%;border-collapse:collapse}
             <select class="form-select" id="selBatch" aria-label="选择报考批次">
               <option value="本科一批">本科一批（重点本科）</option>
               <option value="本科二批">本科二批（普通本科）</option>
-              <option value="专科批次">专科批次（高职高专）</option>
+              <option value="专科批">专科批（高职高专）</option>
             </select>
           </div>
         </div>
@@ -700,7 +700,7 @@ table.data-table{width:100%;border-collapse:collapse}
       <div class="filter-bar">
         <div class="filter-row"><span class="filter-lbl">院校层次：</span><div class="filter-opts"><span class="filter-opt active" onclick="fClick(this)">全部</span><span class="filter-opt" onclick="fClick(this)">985</span><span class="filter-opt" onclick="fClick(this)">211</span><span class="filter-opt" onclick="fClick(this)">双一流</span><span class="filter-opt" onclick="fClick(this)">普通本科</span><span class="filter-opt" onclick="fClick(this)">专科</span></div></div>
         <div class="filter-row" id="filterProvince"><span class="filter-lbl">院校地区：</span><div class="filter-opts"><span class="filter-opt active" onclick="fClick(this)">全部</span><span class="filter-opt" onclick="fClick(this)">北京</span><span class="filter-opt" onclick="fClick(this)">上海</span><span class="filter-opt" onclick="fClick(this)">广东</span><span class="filter-opt" onclick="fClick(this)">江苏</span><span class="filter-opt" onclick="fClick(this)">浙江</span><span class="filter-opt" onclick="fClick(this)">湖北</span><span class="filter-opt" onclick="fClick(this)">四川</span><span class="filter-opt" onclick="fClick(this)">湖南</span></div></div>
-        <div class="filter-row"><span class="filter-lbl">报考批次：</span><div class="filter-opts"><span class="filter-opt active" onclick="fClick(this)">全部</span><span class="filter-opt" onclick="fClick(this)">本科一批</span><span class="filter-opt" onclick="fClick(this)">本科二批</span><span class="filter-opt" onclick="fClick(this)">专科批次</span></div></div>
+        <div class="filter-row"><span class="filter-lbl">报考批次：</span><div class="filter-opts"><span class="filter-opt active" onclick="fClick(this)">全部</span><span class="filter-opt" onclick="fClick(this)">本科一批</span><span class="filter-opt" onclick="fClick(this)">本科二批</span><span class="filter-opt" onclick="fClick(this)">专科批</span></div></div>
         <div class="filter-row"><span class="filter-lbl">志愿类型：</span><div class="filter-opts"><span class="filter-opt active" onclick="fClick(this)">全部</span><span class="filter-opt" onclick="fClick(this)" style="color:var(--reach)">冲一冲</span><span class="filter-opt" onclick="fClick(this)" style="color:var(--safe)">稳一稳</span><span class="filter-opt" onclick="fClick(this)" style="color:var(--guarantee)">保一保</span></div></div>
       </div>
       <div class="table-wrap">
@@ -785,7 +785,19 @@ table.data-table{width:100%;border-collapse:collapse}
 
 <script>
 /* ==================== 接口请求基地址 ==================== */
-const API_BASE = 'http://localhost:8000/api';
+const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+  ? 'http://localhost:8000/api'
+  : 'https://gaokao-volunteer-system.onrender.com/api';
+
+function isDualClassValue(v){
+  if(v === null || v === undefined) return false;
+  const s = String(v).trim();
+  return s !== '' && s !== '-';
+}
+
+function isOrdinaryUndergraduate(s){
+  return !s.is_985 && !s.is_211 && !isDualClassValue(s.dual_class) && s.level === '本科';
+}
 
 /* ==================== 省份→选科模式映射 ==================== */
 const PROVINCE_MODE={
@@ -1062,8 +1074,8 @@ function renderRecommendations(recoData, levelFilter) {
       list = list.filter(s => {
         if(levelFilter === '985院校') return s.is_985;
         if(levelFilter === '211院校') return s.is_211;
-        if(levelFilter === '双一流') return s.dual_class;
-        if(levelFilter === '普通本科') return !s.is_985 && !s.is_211 && s.level === '本科';
+        if(levelFilter === '双一流') return isDualClassValue(s.dual_class);
+        if(levelFilter === '普通本科') return isOrdinaryUndergraduate(s);
         if(levelFilter === '专科院校') return s.level === '专科';
         return true;
       });
@@ -1224,8 +1236,8 @@ function renderTable(items) {
     let badgesHtml = '';
     if(s.is_985) badgesHtml += `<span class="b985">985</span>`;
     if(s.is_211) badgesHtml += `<span class="b211">211</span>`;
-    if(s.dual_class) badgesHtml += `<span class="bdual">双一流</span>`;
-    if(!s.is_985 && !s.is_211 && s.level==='本科') badgesHtml += `<span class="bnorm">普通本科</span>`;
+    if(isDualClassValue(s.dual_class)) badgesHtml += `<span class="bdual">双一流</span>`;
+    if(isOrdinaryUndergraduate(s)) badgesHtml += `<span class="bnorm">普通本科</span>`;
     if(s.level==='专科') badgesHtml += `<span class="bnorm">专科</span>`;
     
     let typePill = '';
@@ -1520,13 +1532,13 @@ async function loadDirectorySchools() {
         // 由于 985 211 筛选在基础目录接口中没有详细实现，我们可以在前端做一次过滤
         if (dirFilterState.level === '985' && !s.is_985) return;
         if (dirFilterState.level === '211' && !s.is_211) return;
-        if (dirFilterState.level === '双一流' && !s.dual_class) return;
+        if (dirFilterState.level === '双一流' && !isDualClassValue(s.dual_class)) return;
         
         let badgesHtml = '';
         if(s.is_985) badgesHtml += `<span class="b985">985</span>`;
         if(s.is_211) badgesHtml += `<span class="b211">211</span>`;
-        if(s.dual_class) badgesHtml += `<span class="bdual">双一流</span>`;
-        if(!s.is_985 && !s.is_211 && s.level==='本科') badgesHtml += `<span class="bnorm">普通本科</span>`;
+        if(isDualClassValue(s.dual_class)) badgesHtml += `<span class="bdual">双一流</span>`;
+        if(isOrdinaryUndergraduate(s)) badgesHtml += `<span class="bnorm">普通本科</span>`;
         if(s.level==='专科') badgesHtml += `<span class="bnorm">专科</span>`;
         
         let logoName = s.school_name.substring(0, 2);
@@ -1535,6 +1547,7 @@ async function loadDirectorySchools() {
         let levelShow = '普通本科';
         if(s.is_985) levelShow = '985';
         else if(s.is_211) levelShow = '211';
+        else if(isDualClassValue(s.dual_class)) levelShow = '双一流';
         else if(s.level === '专科') levelShow = '专科';
         
         html += `
