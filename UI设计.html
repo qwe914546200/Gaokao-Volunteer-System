@@ -1020,8 +1020,13 @@ async function handleQuery(){
     toast('success','分析完成！推荐'+sch+'所院校');
     
     // 渲染推荐卡片
-    renderRecommendations(data.recommendations, '全部推荐');
-    updatePieChart(data.recommendations);
+    if (data.recommendations) {
+      renderRecommendations(data.recommendations, '全部推荐');
+      updatePieChart(data.recommendations);
+    } else {
+      renderRecommendations({"reach":[], "safe":[], "guarantee":[]}, '全部推荐');
+      updatePieChart({"reach":[], "safe":[], "guarantee":[]});
+    }
     
     // 自动触发一次院校筛选列表的更新
     loadFilterSchools();
@@ -1046,7 +1051,7 @@ function renderRecommendations(recoData, levelFilter) {
   ];
   
   types.forEach(t => {
-    let list = recoData[t.key] || [];
+    let list = recoData && recoData[t.key] ? recoData[t.key] : [];
     
     // 过滤层级
     if (levelFilter !== '全部推荐') {
@@ -1093,6 +1098,9 @@ function renderRecommendations(recoData, levelFilter) {
 }
 
 function updatePieChart(recoData) {
+  if (!recoData) {
+    recoData = {reach: [], safe: [], guarantee: []};
+  }
   const r = recoData.reach ? recoData.reach.length : 0;
   const s = recoData.safe ? recoData.safe.length : 0;
   const g = recoData.guarantee ? recoData.guarantee.length : 0;
