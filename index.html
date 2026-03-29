@@ -302,7 +302,7 @@ a{text-decoration:none;color:inherit}button{font-family:inherit}input,select{fon
 .form-top-row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:20px;padding-bottom:18px;border-bottom:1px dashed var(--border)}
 .form-group{display:flex;flex-direction:column;gap:4px;flex:1;min-width:180px}
 .form-label{font-size:12px;font-weight:600;color:var(--text2);display:flex;align-items:center;gap:4px}
-.form-select{height:42px;border:2px solid #D9D9D9;border-radius:var(--radius-sm);padding:0 12px;font-size:13px;color:var(--text);background:#fff;outline:none;cursor:pointer;transition:border-color .2s;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='%234E5969'%3E%3Cpath d='M5 6L0 0h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+.form-select{height:42px;border:2px solid #D9D9D9;border-radius:var(--radius-sm);padding:0 36px 0 12px;font-size:13px;color:var(--text);background:#fff;outline:none;cursor:pointer;transition:border-color .2s;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='%234E5969'%3E%3Cpath d='M5 6L0 0h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
 .form-select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(22,119,255,.12)}
 .form-select option{font-size:13px}
 
@@ -630,8 +630,7 @@ table.data-table{width:100%;border-collapse:collapse}
           <div class="form-group">
             <div class="form-label">🎯 报考批次</div>
             <select class="form-select" id="selBatch" aria-label="选择报考批次">
-              <option value="本科一批">本科一批（重点本科）</option>
-              <option value="本科二批">本科二批（普通本科）</option>
+              <option value="本科批">本科批</option>
               <option value="专科批">专科批（高职高专）</option>
             </select>
           </div>
@@ -700,7 +699,7 @@ table.data-table{width:100%;border-collapse:collapse}
       <div class="filter-bar">
         <div class="filter-row"><span class="filter-lbl">院校层次：</span><div class="filter-opts"><span class="filter-opt active" onclick="fClick(this)">全部</span><span class="filter-opt" onclick="fClick(this)">985</span><span class="filter-opt" onclick="fClick(this)">211</span><span class="filter-opt" onclick="fClick(this)">双一流</span><span class="filter-opt" onclick="fClick(this)">普通本科</span><span class="filter-opt" onclick="fClick(this)">专科</span></div></div>
         <div class="filter-row" id="filterProvince"><span class="filter-lbl">院校地区：</span><div class="filter-opts"><span class="filter-opt active" onclick="fClick(this)">全部</span><span class="filter-opt" onclick="fClick(this)">北京</span><span class="filter-opt" onclick="fClick(this)">上海</span><span class="filter-opt" onclick="fClick(this)">广东</span><span class="filter-opt" onclick="fClick(this)">江苏</span><span class="filter-opt" onclick="fClick(this)">浙江</span><span class="filter-opt" onclick="fClick(this)">湖北</span><span class="filter-opt" onclick="fClick(this)">四川</span><span class="filter-opt" onclick="fClick(this)">湖南</span></div></div>
-        <div class="filter-row"><span class="filter-lbl">报考批次：</span><div class="filter-opts"><span class="filter-opt active" onclick="fClick(this)">全部</span><span class="filter-opt" onclick="fClick(this)">本科一批</span><span class="filter-opt" onclick="fClick(this)">本科二批</span><span class="filter-opt" onclick="fClick(this)">专科批</span></div></div>
+        <div class="filter-row"><span class="filter-lbl">报考批次：</span><div class="filter-opts"><span class="filter-opt active" onclick="fClick(this)">全部</span><span class="filter-opt" onclick="fClick(this)">本科批</span><span class="filter-opt" onclick="fClick(this)">专科批</span></div></div>
         <div class="filter-row"><span class="filter-lbl">志愿类型：</span><div class="filter-opts"><span class="filter-opt active" onclick="fClick(this)">全部</span><span class="filter-opt" onclick="fClick(this)" style="color:var(--reach)">冲一冲</span><span class="filter-opt" onclick="fClick(this)" style="color:var(--safe)">稳一稳</span><span class="filter-opt" onclick="fClick(this)" style="color:var(--guarantee)">保一保</span></div></div>
       </div>
       <div class="table-wrap">
@@ -756,6 +755,10 @@ table.data-table{width:100%;border-collapse:collapse}
   <!-- 高校目录页 -->
   <div id="directoryPage" class="directory-page">
     <div class="dir-hero"><h2>🏫 全国高校目录</h2><p>查询全国高校排名、录取位次、最低投档分数 · 数据持续更新中（模拟数据）</p></div>
+    <div class="dir-filters" style="margin-bottom:12px">
+      <div class="filter-row"><span class="filter-lbl">排名类别：</span><div class="filter-opts" id="rankCategoryOpts"><span class="filter-opt active" onclick="switchRankCategory(this,'学校综合排名')">学校综合排名</span><span class="filter-opt" onclick="switchRankCategory(this,'学科排名')">学科排名</span></div></div>
+      <div class="filter-row"><span class="filter-lbl">排名来源：</span><div class="filter-opts" id="rankSourceOpts"><span class="filter-opt active" onclick="switchRankSource(this,'ESI')">ESI</span><span class="filter-opt" onclick="switchRankSource(this,'U.S.News世界大学')">U.S.News世界大学</span><span class="filter-opt" onclick="switchRankSource(this,'泰晤士')">泰晤士</span><span class="filter-opt" onclick="switchRankSource(this,'校友会')">校友会</span></div></div>
+    </div>
     <div class="dir-filters">
       <div class="filter-row" id="dirFilterLevel"><span class="filter-lbl">院校层次：</span><div class="filter-opts"><span class="filter-opt active" onclick="dfClick(this)">全部</span><span class="filter-opt" onclick="dfClick(this)">985</span><span class="filter-opt" onclick="dfClick(this)">211</span><span class="filter-opt" onclick="dfClick(this)">双一流</span><span class="filter-opt" onclick="dfClick(this)">普通本科</span><span class="filter-opt" onclick="dfClick(this)">专科</span></div></div>
       <div class="filter-row" id="dirFilterType"><span class="filter-lbl">院校类型：</span><div class="filter-opts"><span class="filter-opt active" onclick="dfClick(this)">全部</span><span class="filter-opt" onclick="dfClick(this)">综合</span><span class="filter-opt" onclick="dfClick(this)">理工</span><span class="filter-opt" onclick="dfClick(this)">师范</span><span class="filter-opt" onclick="dfClick(this)">医药</span><span class="filter-opt" onclick="dfClick(this)">财经</span></div></div>
@@ -780,6 +783,17 @@ table.data-table{width:100%;border-collapse:collapse}
 <div class="loading-overlay" id="loadingOverlay"><div class="loading-box"><div class="loading-spinner"></div><div class="loading-text">正在模拟分析中…</div><div class="loading-sub">数据仅供参考，请以官方为准</div></div></div>
 <!-- Toast -->
 <div class="toast-wrap" id="toastWrap"></div>
+<!-- 院校详情弹层 -->
+<div id="schoolDetailModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:3000;padding:24px;overflow:auto" onclick="closeSchoolDetail(event)">
+  <div style="max-width:980px;margin:20px auto;background:#fff;border-radius:12px;padding:16px 18px" onclick="event.stopPropagation()">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <h3 id="detailTitle" style="margin:0;font-size:18px">院校详情</h3>
+      <button class="vol-btn" onclick="forceCloseSchoolDetail()">关闭</button>
+    </div>
+    <div id="detailMeta" style="font-size:12px;color:#666;margin-bottom:10px"></div>
+    <div id="detailBody"></div>
+  </div>
+</div>
 <!-- 回顶按钮 -->
 <button class="back-top" id="backTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="返回顶部">↑</button>
 
@@ -1046,6 +1060,7 @@ async function handleQuery(){
     
     // 自动触发一次院校筛选列表的更新
     loadFilterSchools();
+    loadAvailableProvinces();
     
     // 滚动到推荐区域
     scrollToSection('recoSection');
@@ -1192,7 +1207,7 @@ function fClick(el){
   const val = el.textContent.trim();
   if(label.includes('层次')) filterState.level = val;
   else if(label.includes('地区')) filterState.province = val;
-  else if(label.includes('批次')) filterState.batch = val;
+  else if(label.includes('批次')) { filterState.batch = val; loadAvailableProvinces(); }
   else if(label.includes('类型')) filterState.rec_type = val === '冲一冲' ? 'reach' : (val === '稳一稳' ? 'safe' : (val === '保一保' ? 'guarantee' : '全部'));
   
   var tb=document.getElementById('tableBody');
@@ -1222,6 +1237,24 @@ async function loadFilterSchools() {
   } catch(e) {
     console.error(e);
   }
+}
+
+async function loadAvailableProvinces() {
+  var subj=document.getElementById('selMode').value==='3+1+2' ? document.getElementById('s_p_sel').value+'类' : '理科';
+  var batch = filterState.batch === '全部' ? document.getElementById('selBatch').value : filterState.batch;
+  try {
+    const res = await fetch(`${API_BASE}/schools/provinces?subject_type=${encodeURIComponent(subj)}&batch=${encodeURIComponent(batch)}`);
+    const data = await res.json();
+    if (data.status !== 'success') return;
+    const row = document.getElementById('filterProvince');
+    const opts = row.querySelector('.filter-opts');
+    const active = filterState.province || '全部';
+    let html = `<span class="filter-opt ${active==='全部'?'active':''}" onclick="fClick(this)">全部</span>`;
+    data.items.forEach(p => {
+      html += `<span class="filter-opt ${active===p?'active':''}" onclick="fClick(this)">${p}</span>`;
+    });
+    opts.innerHTML = html;
+  } catch(e) {}
 }
 
 function renderTable(items) {
@@ -1254,14 +1287,14 @@ function renderTable(items) {
           <div class="uni-cell">
             <div class="logo" style="background:var(--primary)">${logoName}</div>
             <div>
-              <div class="name">${s.school_name}</div>
+              <div class="name" style="color:var(--primary);cursor:pointer" onclick="openSchoolDetail('${(s.school_name||'').replace(/'/g, \"&#39;\")}')">${s.school_name}</div>
               <div class="badges">${badgesHtml}</div>
             </div>
           </div>
         </td>
         <td>${s.province}</td>
         <td>${s.school_type || '综合'}</td>
-        <td>${document.getElementById('selBatch').value}</td>
+        <td>${s.batch || document.getElementById('selBatch').value}</td>
         <td><strong>${s.min_score}</strong></td>
         <td>${s.min_rank || '-'}</td>
         <td style="font-weight:800;color:${probColor}">${s.probability}%</td>
@@ -1482,6 +1515,11 @@ let dirFilterState = {
   province: '全部'
 };
 
+let rankState = {
+  category: '学校综合排名',
+  source: 'ESI'
+};
+
 function dfClick(el){
   const row = el.parentElement.parentElement;
   const label = row.querySelector('.filter-lbl').textContent;
@@ -1505,17 +1543,70 @@ function dfClick(el){
   },180);}
 }
 
-async function loadDirectorySchools() {
-  let url = `${API_BASE}/schools/directory?page=1&size=50`;
-  
-  // 对于 985/211/双一流 等层级，后端暂时没有完全适配所有的级联条件，这里简化处理传 level 参数，或者后端配合。
-  // 我们已经在后端的 /directory 接口写了简单的筛选逻辑，如果是特殊层级可能需要扩展。
-  // 为了不改变后端代码，我们在前端尽量适配现有的接口。
-  if(dirFilterState.level !== '全部' && ['本科', '专科'].includes(dirFilterState.level)) {
-    url += `&level=${dirFilterState.level}`;
+function switchRankCategory(el, category){
+  document.querySelectorAll('#rankCategoryOpts .filter-opt').forEach(o=>o.classList.remove('active'));
+  el.classList.add('active');
+  rankState.category = category;
+  const sourceOpts = document.getElementById('rankSourceOpts');
+  if(category === '学科排名'){
+    sourceOpts.innerHTML = `<span class="filter-opt active" onclick="switchRankSource(this,'ESI学科排名')">ESI学科排名</span><span class="filter-opt" onclick="switchRankSource(this,'中国大学软科学科排名')">中国大学软科学科排名</span>`;
+    rankState.source = 'ESI学科排名';
+  } else {
+    sourceOpts.innerHTML = `<span class="filter-opt active" onclick="switchRankSource(this,'ESI')">ESI</span><span class="filter-opt" onclick="switchRankSource(this,'U.S.News世界大学')">U.S.News世界大学</span><span class="filter-opt" onclick="switchRankSource(this,'泰晤士')">泰晤士</span><span class="filter-opt" onclick="switchRankSource(this,'校友会')">校友会</span>`;
+    rankState.source = 'ESI';
   }
-  if(dirFilterState.type_ !== '全部') url += `&type_=${dirFilterState.type_}`;
-  if(dirFilterState.province !== '全部') url += `&province=${dirFilterState.province}`;
+  loadDirectorySchools();
+}
+
+function switchRankSource(el, source){
+  document.querySelectorAll('#rankSourceOpts .filter-opt').forEach(o=>o.classList.remove('active'));
+  el.classList.add('active');
+  rankState.source = source;
+  loadDirectorySchools();
+}
+
+async function openSchoolDetail(name){
+  var subj=document.getElementById('selMode').value==='3+1+2' ? document.getElementById('s_p_sel').value+'类' : '理科';
+  var batch = filterState.batch === '全部' ? document.getElementById('selBatch').value : filterState.batch;
+  try{
+    const res = await fetch(`${API_BASE}/schools/detail?school_name=${encodeURIComponent(name)}&subject_type=${encodeURIComponent(subj)}&batch=${encodeURIComponent(batch)}`);
+    const data = await res.json();
+    if(data.status !== 'success') return;
+    document.getElementById('detailTitle').textContent = data.school_name;
+    const siteText = data.official_site ? `<a href="${data.official_site}" target="_blank" style="color:var(--primary)">学校官网</a>` : '学校官网：暂无';
+    document.getElementById('detailMeta').innerHTML = `${siteText}　|　选科要求：${(data.subject_requirements||[]).join('、') || '暂无'}　|　专业组：${(data.professional_groups||[]).join('、') || '暂无'}`;
+    let historyHtml = '<h4 style="margin:6px 0">历年最低分/位次</h4><div class="table-wrap"><table class="data-table"><thead><tr><th>年份</th><th>批次</th><th>最低分</th><th>最低位次</th></tr></thead><tbody>';
+    (data.admission_history || []).forEach(r => {
+      historyHtml += `<tr><td>${r.year || '-'}</td><td>${r.batch || '-'}</td><td>${r.min_score || '-'}</td><td>${r.min_rank || '-'}</td></tr>`;
+    });
+    if(!data.admission_history || data.admission_history.length === 0) historyHtml += `<tr><td colspan="4" style="text-align:center;color:var(--text3)">暂无历年数据</td></tr>`;
+    historyHtml += '</tbody></table></div>';
+
+    let majorHtml = '<h4 style="margin:10px 0 6px">专业组/专业历史数据</h4><div class="table-wrap"><table class="data-table"><thead><tr><th>年份</th><th>专业</th><th>最低分</th><th>最低位次</th></tr></thead><tbody>';
+    (data.major_history || []).slice(0,30).forEach(r => {
+      majorHtml += `<tr><td>${r.year || '-'}</td><td>${r.major_name || '-'}</td><td>${r.min_score || '-'}</td><td>${r.min_rank || '-'}</td></tr>`;
+    });
+    if(!data.major_history || data.major_history.length === 0) majorHtml += `<tr><td colspan="4" style="text-align:center;color:var(--text3)">暂无专业历史数据</td></tr>`;
+    majorHtml += '</tbody></table></div>';
+    document.getElementById('detailBody').innerHTML = historyHtml + majorHtml;
+    document.getElementById('schoolDetailModal').style.display = 'block';
+  }catch(e){
+    toast('error','院校详情加载失败');
+  }
+}
+
+function closeSchoolDetail(e){
+  if(e.target.id === 'schoolDetailModal') document.getElementById('schoolDetailModal').style.display='none';
+}
+function forceCloseSchoolDetail(){document.getElementById('schoolDetailModal').style.display='none';}
+
+async function loadDirectorySchools() {
+  let url = `${API_BASE}/schools/ranking/list?page=1&size=80&category=${encodeURIComponent(rankState.category)}&source=${encodeURIComponent(rankState.source)}`;
+  if(dirFilterState.level !== '全部' && ['本科', '专科'].includes(dirFilterState.level)) {
+    url += `&level=${encodeURIComponent(dirFilterState.level)}`;
+  }
+  if(dirFilterState.type_ !== '全部') url += `&type_=${encodeURIComponent(dirFilterState.type_)}`;
+  if(dirFilterState.province !== '全部') url += `&province=${encodeURIComponent(dirFilterState.province)}`;
   
   try {
     const res = await fetch(url);
@@ -1529,7 +1620,8 @@ async function loadDirectorySchools() {
       
       let html = '';
       data.items.forEach(s => {
-        // 由于 985 211 筛选在基础目录接口中没有详细实现，我们可以在前端做一次过滤
+        if(dirFilterState.type_ !== '全部' && s.school_type && s.school_type !== dirFilterState.type_) return;
+        if(dirFilterState.province !== '全部' && s.province && s.province !== dirFilterState.province) return;
         if (dirFilterState.level === '985' && !s.is_985) return;
         if (dirFilterState.level === '211' && !s.is_211) return;
         if (dirFilterState.level === '双一流' && !isDualClassValue(s.dual_class)) return;
@@ -1542,7 +1634,7 @@ async function loadDirectorySchools() {
         if(s.level==='专科') badgesHtml += `<span class="bnorm">专科</span>`;
         
         let logoName = s.school_name.substring(0, 2);
-        let rankShow = s.rank && s.rank !== 9999 ? `<strong style="color:var(--reach)">${s.rank}</strong>` : '-';
+        let rankShow = s.rank ? `<strong style="color:var(--reach)">${s.rank}</strong>` : '-';
         
         let levelShow = '普通本科';
         if(s.is_985) levelShow = '985';
@@ -1557,14 +1649,14 @@ async function loadDirectorySchools() {
               <div class="uni-cell">
                 <div class="logo" style="background:var(--primary)">${logoName}</div>
                 <div>
-                  <div class="name">${s.school_name}</div>
+                  <div class="name" style="color:var(--primary);cursor:pointer" onclick="openSchoolDetail('${(s.school_name||'').replace(/'/g, \"&#39;\")}')">${s.school_name}</div>
                   <div class="badges">${badgesHtml}</div>
                 </div>
               </div>
             </td>
-            <td>${s.province}</td>
+            <td>${s.province || '-'}</td>
             <td>${levelShow}</td>
-            <td>${s.school_type || '综合'}</td>
+            <td>${s.school_type || '-'}</td>
             <td><strong>-</strong></td>
             <td>-</td>
             <td><button class="add-btn" onclick="toggleTblAdd(this)">+ 对比</button></td>
@@ -1591,6 +1683,7 @@ document.addEventListener('DOMContentLoaded',function(){
   
   // 首次加载高校目录
   loadDirectorySchools();
+  loadAvailableProvinces();
 });
 </script>
 </body>

@@ -1,3 +1,5 @@
+from collections import defaultdict
+from statistics import mean
 from fastapi import APIRouter, HTTPException
 from backend.models import AnalysisRequest, AnalysisResponse, SchoolRecommendation
 from backend.database import get_db_connection
@@ -15,9 +17,18 @@ def normalize_batch(batch: str) -> str:
     if not batch:
         return batch
     b = batch.strip().replace(' ', '')
-    if b == '专科批次':
+    if '专科' in b:
         return '专科批'
+    if '本科' in b:
+        return '本科批'
     return b
+
+def batch_like_value(batch: str) -> str:
+    if batch == '本科批':
+        return '本科%'
+    if batch == '专科批':
+        return '专科%'
+    return batch
 
 def calculate_probability(diff: int, rec_type: str) -> int:
     """计算模拟录取概率"""
@@ -61,6 +72,7 @@ def recommend_schools(req: AnalysisRequest):
     try:
         mapped_subject = normalize_subject(req.subject_type)
         mapped_batch = normalize_batch(req.batch)
+        batch_like = batch_like_value(mapped_batch)
 
         # 2. 估算全省位次 (查询最近年份的一分一段表)
         cursor.execute("SELECT MAX(year) as max_year FROM score_segment WHERE subject_type = ?", (mapped_subject,))
@@ -88,38 +100,57 @@ def recommend_schools(req: AnalysisRequest):
         # 3. 冲稳保智能推荐 (模块二)
         cursor.execute("""
             SELECT MAX(year) as max_year FROM school_admission 
-            WHERE subject_type = ? AND batch = ?
-        """, (mapped_subject, mapped_batch))
+            WHERE subject_type = ? AND batch LIKE ?
+        """, (mapped_subject, batch_like))
         adm_year_row = cursor.fetchone()
         
         if not adm_year_row or not adm_year_row['max_year']:
             cursor.execute("""
                 SELECT MAX(year) as max_year FROM school_admission 
-                WHERE subject_type = ? AND batch = ?
-            """, (req.subject_type, mapped_batch))
+                WHERE subject_type = ? AND batch LIKE ?
+            """, (req.subject_type, batch_like))
             adm_year_row = cursor.fetchone()
             adm_query_subject = req.subject_type
         else:
             adm_query_subject = mapped_subject
 
-        adm_max_year = adm_year_row['max_year'] if adm_year_row and adm_year_row['max_year'] else 2024
+        adm_max_year = adm_year_row['max_year'] if adm_year_row and adm_year_row['max_year'] else 2025
 
         cursor.execute("""
-            SELECT a.school_name, a.province, a.min_score, a.min_rank,
+            SELECT a.school_name, a.province, a.year, a.min_score, a.min_rank,
                    i.school_type, i.is_985, i.is_211, i.dual_class, i.level
             FROM school_admission a
             LEFT JOIN school_info i ON a.school_name = i.school_name
-            WHERE a.year = ? AND a.subject_type = ? AND a.batch = ? AND a.min_score IS NOT NULL
-        """, (adm_max_year, adm_query_subject, mapped_batch))
+            WHERE a.subject_type = ? AND a.batch LIKE ? AND a.min_score IS NOT NULL
+              AND a.year >= ?
+        """, (adm_query_subject, batch_like, max(adm_max_year - 2, 2022)))
         
         schools_data = cursor.fetchall()
         
         recommendations = {"reach": [], "safe": [], "guarantee": []}
         total_schools = 0
 
+        grouped = defaultdict(list)
         for row in schools_data:
-            school_min_score = row['min_score']
-            diff = school_min_score - req.total_score
+            grouped[row['school_name']].append(dict(row))
+
+        for school_name, rows in grouped.items():
+            rows = sorted(rows, key=lambda x: x['year'], reverse=True)
+            latest = rows[0]
+            latest_score = latest['min_score']
+            score_list = [r['min_score'] for r in rows if r['min_score'] is not None]
+            if not score_list:
+                continue
+
+            avg_score = mean(score_list)
+            stability_penalty = (max(score_list) - min(score_list)) * 0.15 if len(score_list) > 1 else 0
+            trend_adjust = 0
+            if len(score_list) >= 2:
+                trend_adjust = (score_list[0] - score_list[-1]) * 0.2
+
+            expected_score = avg_score + trend_adjust + stability_penalty
+            blended_score = round(latest_score * 0.6 + expected_score * 0.4, 1)
+            diff = blended_score - req.total_score
 
             rec_type = None
             if 5 <= diff <= 20:
@@ -134,17 +165,21 @@ def recommend_schools(req: AnalysisRequest):
                 
                 # 为了限制返回数据量，每类最多返回 20 条（可根据需要调整）
                 if len(recommendations[rec_type]) < 20:
-                    prob = calculate_probability(diff, rec_type)
+                    prob = calculate_probability(int(diff), rec_type)
                     recommendations[rec_type].append({
-                        "school_name": row['school_name'],
-                        "province": row['province'],
-                        "school_type": row['school_type'] or "综合",
-                        "is_985": bool(row['is_985']),
-                        "is_211": bool(row['is_211']),
-                        "dual_class": row['dual_class'] or "",
-                        "level": row['level'] or "",
-                        "min_score": school_min_score,
-                        "min_rank": row['min_rank'] or 0,
+                        "school_name": latest['school_name'],
+                        "province": latest['province'],
+                        "school_type": latest['school_type'] or "综合",
+                        "is_985": bool(latest['is_985']),
+                        "is_211": bool(latest['is_211']),
+                        "dual_class": latest['dual_class'] or "",
+                        "level": latest['level'] or "",
+                        "min_score": latest_score,
+                        "min_rank": latest['min_rank'] or 0,
+                        "years_covered": len(score_list),
+                        "score_line_latest": latest_score,
+                        "score_line_avg": round(avg_score, 1),
+                        "score_line_blended": blended_score,
                         "probability": prob,
                         "rec_type": rec_type
                     })
