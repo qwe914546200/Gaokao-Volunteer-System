@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
-from models import AnalysisRequest, AnalysisResponse, SchoolRecommendation
-from database import get_db_connection
+from backend.models import AnalysisRequest, AnalysisResponse, SchoolRecommendation
+from backend.database import get_db_connection
 
 router = APIRouter()
 

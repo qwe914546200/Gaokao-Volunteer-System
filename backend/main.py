@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import analysis, schools
+from backend.routers import analysis, schools
 
 app = FastAPI(
     title="智慧升学平台 API",
