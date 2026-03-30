@@ -520,7 +520,7 @@ table.data-table{width:100%;border-collapse:collapse}
       </div>
     </div>
     <div class="disclaimer-modal-footer">
-      <label class="disclaimer-check"><input type="checkbox" id="disclaimerCheck" onclick="toggleConfirmBtn()">我已认真阅读并知晓上述全部风险声明</label>
+      <label class="disclaimer-check"><input type="checkbox" id="disclaimerCheck" onclick="toggleConfirmBtn(this.checked)" onchange="toggleConfirmBtn(this.checked)">我已认真阅读并知晓上述全部风险声明</label>
       <button class="disclaimer-confirm-btn" id="disclaimerBtn" disabled onclick="confirmDisclaimer()">请先勾选上方确认框</button>
     </div>
   </div>
@@ -826,11 +826,42 @@ const PROVINCE_MODE={
 };
 
 /* ==================== 声明弹窗逻辑 ==================== */
-function toggleConfirmBtn(){
+function toggleConfirmBtn(forceChecked){
   const cb=document.getElementById('disclaimerCheck'),btn=document.getElementById('disclaimerBtn');
-  if(cb.checked){btn.disabled=false;btn.classList.add('enabled');btn.textContent='✅ 确认并进入系统';}
-  else{btn.disabled=true;btn.classList.remove('enabled');btn.textContent='请先勾选上方确认框';}
+  if(!cb || !btn) return;
+
+  const checked = typeof forceChecked === 'boolean' ? forceChecked : !!cb.checked;
+  btn.disabled = !checked;
+  if(checked){btn.removeAttribute('disabled');btn.classList.add('enabled');btn.textContent='✅ 确认并进入系统';}
+  else{btn.setAttribute('disabled','disabled');btn.classList.remove('enabled');btn.textContent='请先勾选上方确认框';}
 }
+function runDisclaimerRegressionCheck(){
+  const cb=document.getElementById('disclaimerCheck'),btn=document.getElementById('disclaimerBtn');
+  if(!cb || !btn){
+    console.error('[声明弹窗自检] 未找到必需节点');
+    return;
+  }
+
+  const prevChecked = cb.checked;
+
+  cb.checked = false;
+  toggleConfirmBtn(false);
+  const disabledWhenUnchecked = btn.disabled === true && !btn.classList.contains('enabled');
+
+  cb.checked = true;
+  toggleConfirmBtn(true);
+  const enabledWhenChecked = btn.disabled === false && btn.classList.contains('enabled');
+
+  cb.checked = prevChecked;
+  toggleConfirmBtn(prevChecked);
+
+  if(disabledWhenUnchecked && enabledWhenChecked){
+    console.info('[声明弹窗自检] 通过：勾选联动确认按钮正常');
+  }else{
+    console.error('[声明弹窗自检] 失败：勾选联动确认按钮异常', { disabledWhenUnchecked, enabledWhenChecked });
+  }
+}
+
 function confirmDisclaimer(){
   document.getElementById('disclaimerOverlay').classList.add('hidden');
   const mc=document.getElementById('mainContent');
@@ -1677,6 +1708,15 @@ async function loadDirectorySchools() {
 
 /* ==================== 初始化 ==================== */
 document.addEventListener('DOMContentLoaded',function(){
+  const disclaimerCheckEl = document.getElementById('disclaimerCheck');
+  if(disclaimerCheckEl){
+    disclaimerCheckEl.addEventListener('change', function(){ toggleConfirmBtn(this.checked); });
+    toggleConfirmBtn(disclaimerCheckEl.checked);
+    runDisclaimerRegressionCheck();
+
+
+  }
+
   onProvinceChange();
   var obs=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.style.opacity='1';e.target.style.transform='translateY(0)';}});},{threshold:.08});
   document.querySelectorAll('.section').forEach(function(s){s.style.opacity='0';s.style.transform='translateY(16px)';s.style.transition='all .5s ease';obs.observe(s);});
